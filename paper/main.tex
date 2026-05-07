@@ -1,0 +1,341 @@
+\documentclass[conference]{IEEEtran}
+\usepackage{cite}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{graphicx}
+\usepackage{textcomp}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage[hidelinks]{hyperref}
+\usepackage{multirow}
+
+\begin{document}
+
+\title{Comparative Evaluation and Feature Importance Analysis of Machine Learning Models for Phishing Website Detection}
+
+\author{\IEEEauthorblockN{Murshud Azimov, Javid Shukurov}
+\IEEEauthorblockA{Western Caspian University}}
+
+\maketitle
+
+\begin{abstract}
+Phishing websites are a major cybersecurity threat that deceive users into revealing sensitive information such as passwords, financial credentials, and personal data. Machine learning techniques have been widely explored for phishing website detection; however, comparing multiple models under the same experimental setting and analyzing their interpretability remains important. This study presents a comparative evaluation of six supervised machine learning models for phishing website detection using a public dataset from the UCI Machine Learning Repository. We evaluate Logistic Regression, K-Nearest Neighbors, Support Vector Machine, Decision Tree, Random Forest, and Gradient Boosting classifiers. The models are assessed using accuracy, precision, recall, F1-score, and ROC-AUC. In addition, permutation feature importance is used to identify the most influential website features in the classification process. The results show that Random Forest achieved the best overall performance with an F1-score of 0.9733 and ROC-AUC of 0.9967. A feature subset analysis further demonstrates that using only the top 15 features yields performance comparable to using all 30 features. The findings suggest that machine learning models can provide effective and interpretable support for phishing detection.
+\end{abstract}
+
+\begin{IEEEkeywords}
+Phishing detection, machine learning, cybersecurity, feature importance, classification, explainable AI
+\end{IEEEkeywords}
+
+\section{Introduction}
+
+Phishing is one of the most prevalent cybersecurity threats, in which attackers create deceptive websites designed to steal sensitive user information such as login credentials, credit card numbers, and personal data. According to recent reports, phishing attacks continue to increase in both frequency and sophistication, causing significant financial losses and privacy violations for individuals and organizations worldwide.
+
+Traditional defense mechanisms against phishing websites primarily rely on blacklist-based approaches, where known malicious URLs are maintained in a database and blocked when users attempt to access them. However, these methods have a fundamental limitation: they cannot detect newly created phishing websites that have not yet been reported and added to the blacklist. Since attackers frequently change domains and URL structures, blacklist-based systems often fail to provide timely protection against zero-day phishing attacks.
+
+Machine learning-based approaches have emerged as a promising alternative for phishing website detection \cite{sahingoz2019, chiew2021}. By learning patterns from URL structure, domain characteristics, and webpage behavior features, machine learning models can potentially identify phishing websites even when they have not been previously encountered. Various supervised learning algorithms have been applied to this problem, including Decision Trees, Support Vector Machines, Random Forests, and ensemble methods \cite{subasi2020, chatterjee2020, jain2019}. However, a systematic comparison of multiple models under a reproducible experimental setup remains valuable, particularly when considering the trade-offs between different evaluation metrics and the interpretability of model decisions \cite{chiew2021, do2022}.
+
+In cybersecurity applications, understanding why a model classifies a website as phishing is important for security analysts who need to validate and act upon automated decisions \cite{arrieta2020}. Therefore, combining predictive performance with interpretability analysis provides a more complete picture of model utility in real-world phishing detection scenarios.
+
+This study compares six supervised machine learning models for phishing website detection using a public dataset. In addition to performance evaluation using multiple metrics, we apply permutation feature importance to analyze which website features contribute most to phishing classification decisions. We also investigate whether a reduced feature subset can achieve comparable performance to using all available features.
+
+The main contributions of this study are:
+\begin{enumerate}
+    \item A comparative evaluation of six supervised machine learning models for phishing website detection under a consistent experimental setup.
+    \item A performance analysis using accuracy, precision, recall, F1-score, and ROC-AUC, with emphasis on metrics relevant to security-sensitive classification.
+    \item An interpretability analysis based on permutation feature importance to identify the most influential website features.
+    \item A feature subset analysis demonstrating that comparable performance can be achieved with fewer features.
+    \item A reproducible implementation using Python and scikit-learn, publicly available on GitHub.
+\end{enumerate}
+
+\section{Related Work}
+
+\subsection{Traditional Phishing Detection}
+
+Early approaches to phishing detection relied primarily on blacklists and heuristic rules. Blacklist-based systems maintain databases of known phishing URLs and block access when a match is found. While effective for known threats, these systems cannot detect newly created phishing websites. Khonji et al. \cite{khonji2013} provided a comprehensive literature survey on phishing detection methods, categorizing approaches into list-based, heuristic-based, visual similarity-based, and machine learning-based techniques. They highlighted that traditional methods struggle with zero-day phishing attacks due to their reliance on previously known patterns. Basit et al. \cite{basit2021} further discussed the taxonomy of phishing detection approaches, noting that heuristic-based methods require manual rule engineering and may not generalize well to evolving attack strategies.
+
+\subsection{Machine Learning-Based Phishing Detection}
+
+Machine learning approaches have been extensively studied for phishing website detection. Sahingoz et al. \cite{sahingoz2019} applied multiple machine learning algorithms including Random Forest, Decision Tree, and SVM to phishing URL detection, demonstrating that ensemble methods generally outperform individual classifiers. Their work emphasized the importance of feature engineering from URL characteristics.
+
+Chiew et al. \cite{chiew2021} presented a comprehensive survey of machine learning-based solutions for phishing website detection, reviewing various feature types (URL-based, content-based, and third-party service-based) and classification algorithms used in the literature. They noted that while many studies report high accuracy, direct comparison across studies is difficult due to differences in datasets, feature sets, and evaluation protocols.
+
+Subasi and Kremic \cite{subasi2020} compared multiple machine learning classifiers for phishing website detection using the UCI dataset, reporting that Random Forest and Gradient Boosting achieved the highest classification performance. Their findings align with the general observation that ensemble methods are well-suited for this task.
+
+Do et al. \cite{do2022} investigated deep learning approaches for phishing detection, providing a taxonomy of current challenges and future directions. They noted that while deep learning can achieve high accuracy, traditional machine learning methods remain competitive when well-engineered features are available.
+
+Alsariera et al. \cite{alsariera2022} explored phishing detection using machine learning techniques with a focus on feature selection and model comparison, demonstrating that careful feature engineering can significantly impact detection performance.
+
+\subsection{Interpretability in Cybersecurity}
+
+Recent work in machine learning has emphasized the importance of model interpretability, particularly in high-stakes domains such as cybersecurity. Arrieta et al. \cite{arrieta2020} provided a comprehensive survey on explainable artificial intelligence (XAI), discussing various techniques including feature importance, SHAP values, and LIME that can be applied to improve model transparency.
+
+In the context of phishing detection, interpretability is important because security analysts need to understand why a model classifies a website as phishing in order to validate decisions and take appropriate action. Explainable approaches help bridge the gap between automated detection and human decision-making in cybersecurity operations.
+
+\subsection{Evaluation Methodology}
+
+Kohavi \cite{kohavi1995} established best practices for model evaluation through cross-validation, demonstrating that stratified 10-fold cross-validation provides reliable estimates of model performance. Following these established practices ensures that reported results are robust and reproducible.
+
+\section{Methodology}
+
+\subsection{Dataset}
+
+This study uses the UCI Phishing Websites Dataset \cite{uci2016}, which contains 11,055 website instances described by 30 input features. The features represent various characteristics of URLs, domains, and webpage behavior that are relevant to distinguishing phishing websites from legitimate ones. The target variable indicates whether a website is phishing or legitimate.
+
+The dataset features include URL-based attributes (e.g., having\_IP\_Address, URL\_Length, Shortining\_Service, having\_At\_Symbol, prefix\_suffix), domain-based attributes (e.g., Domain\_registration\_length, age\_of\_domain, DNSRecord), and page-based attributes (e.g., SSLfinal\_State, Request\_URL, URL\_of\_Anchor, Links\_in\_tags, SFH, web\_traffic).
+
+The original target encoding uses $-1$ for phishing and $1$ for legitimate websites. For this study, the target was transformed into a binary format where phishing websites are encoded as 1 (positive class) and legitimate websites as 0. This encoding ensures that precision, recall, and F1-score are computed with respect to the phishing class, which is the class of primary interest in a detection system.
+
+\subsection{Preprocessing}
+
+The dataset did not require extensive preprocessing because all features were already encoded as integer values. No missing values were present. For models sensitive to feature scaling (Logistic Regression, K-Nearest Neighbors, and Support Vector Machine), standardization was applied using StandardScaler to transform features to zero mean and unit variance. Tree-based models (Decision Tree, Random Forest, and Gradient Boosting) were trained without scaling, as they are invariant to monotonic transformations of input features.
+
+\subsection{Train-Test Split}
+
+The dataset was divided into 80\% training (8,844 instances) and 20\% testing (2,211 instances) subsets using stratified sampling to preserve the class distribution in both subsets. A fixed random seed was used to ensure reproducibility.
+
+\subsection{Models}
+
+Six supervised learning algorithms were evaluated:
+
+\begin{itemize}
+    \item \textbf{Logistic Regression (LR):} A linear model with balanced class weights and a maximum of 1000 iterations.
+    \item \textbf{K-Nearest Neighbors (KNN):} A distance-based classifier with $k=5$ neighbors.
+    \item \textbf{Support Vector Machine (SVM-RBF):} A kernel-based classifier using the radial basis function kernel with balanced class weights.
+    \item \textbf{Decision Tree (DT):} A tree-based classifier with balanced class weights.
+    \item \textbf{Random Forest (RF):} An ensemble of 300 decision trees with balanced class weights.
+    \item \textbf{Gradient Boosting (GB):} A sequential ensemble method using boosted decision trees.
+\end{itemize}
+
+All models were implemented using scikit-learn \cite{sklearn2011} with default hyperparameters except where noted above. Pipelines were used to combine preprocessing (scaling) and classification steps where appropriate.
+
+\subsection{Evaluation Metrics}
+
+The models were evaluated using five metrics: accuracy, precision, recall, F1-score, and ROC-AUC. In phishing detection, recall is particularly important because a false negative (a phishing website classified as legitimate) may expose users to security risks. Therefore, the F1-score was used as the primary metric for model selection, as it balances precision and recall.
+
+\subsection{Cross-Validation}
+
+In addition to the held-out test set evaluation, 5-fold stratified cross-validation was performed on the training set to obtain more robust performance estimates and assess model stability.
+
+\subsection{Feature Importance Analysis}
+
+Permutation feature importance was applied to the best-performing model on the test set using F1-score as the scoring function. This method measures the decrease in model performance when each feature's values are randomly shuffled, thereby breaking the relationship between the feature and the target. Features that cause a larger performance drop when permuted are considered more important. Twenty repetitions were used to obtain stable importance estimates.
+
+\subsection{Feature Subset Analysis}
+
+To investigate whether a smaller feature subset can achieve comparable performance, the best model was retrained using only the top-$k$ most important features ($k = 5, 10, 15$) and compared against the full feature set ($k = 30$).
+
+\section{Results}
+
+\subsection{Test Set Performance}
+
+Table~\ref{tab:test_results} presents the performance of all six models on the held-out test set, sorted by F1-score.
+
+\begin{table}[htbp]
+\caption{Test Set Performance of Machine Learning Models}
+\label{tab:test_results}
+\centering
+\begin{tabular}{lccccc}
+\toprule
+\textbf{Model} & \textbf{Acc.} & \textbf{Prec.} & \textbf{Rec.} & \textbf{F1} & \textbf{AUC} \\
+\midrule
+Random Forest & 0.9765 & 0.9803 & 0.9663 & 0.9733 & 0.9967 \\
+Decision Tree & 0.9692 & 0.9740 & 0.9561 & 0.9650 & 0.9762 \\
+SVM-RBF & 0.9566 & 0.9576 & 0.9439 & 0.9507 & 0.9901 \\
+Gradient Boosting & 0.9502 & 0.9494 & 0.9378 & 0.9435 & 0.9913 \\
+KNN & 0.9471 & 0.9499 & 0.9296 & 0.9397 & 0.9856 \\
+Logistic Reg. & 0.9317 & 0.9295 & 0.9153 & 0.9224 & 0.9786 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Random Forest achieved the highest performance across all metrics, with an F1-score of 0.9733 and ROC-AUC of 0.9967. Decision Tree ranked second with an F1-score of 0.9650. All models achieved accuracy above 93\%, indicating that the phishing detection task is well-suited for supervised learning approaches.
+
+\subsection{Cross-Validation Results}
+
+Table~\ref{tab:cv_results} presents the 5-fold stratified cross-validation results on the training set.
+
+\begin{table}[htbp]
+\caption{5-Fold Stratified Cross-Validation Results}
+\label{tab:cv_results}
+\centering
+\begin{tabular}{lccccc}
+\toprule
+\textbf{Model} & \textbf{Acc.} & \textbf{Prec.} & \textbf{Rec.} & \textbf{F1} & \textbf{AUC} \\
+\midrule
+Random Forest & 0.9692 & 0.9675 & 0.9630 & 0.9652 & 0.9946 \\
+Decision Tree & 0.9562 & 0.9499 & 0.9515 & 0.9507 & 0.9680 \\
+Gradient Boosting & 0.9487 & 0.9502 & 0.9331 & 0.9415 & 0.9899 \\
+SVM-RBF & 0.9481 & 0.9490 & 0.9331 & 0.9409 & 0.9868 \\
+KNN & 0.9375 & 0.9345 & 0.9237 & 0.9290 & 0.9804 \\
+Logistic Reg. & 0.9254 & 0.9163 & 0.9153 & 0.9157 & 0.9788 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The cross-validation results are consistent with the test set results, confirming that Random Forest is the best-performing model. The consistency between test set and cross-validation performance suggests that the results are not due to a favorable train-test split.
+
+\subsection{Confusion Matrix Analysis}
+
+Fig.~\ref{fig:confusion_matrix} shows the confusion matrix for the Random Forest model on the test set.
+
+\begin{figure}[htbp]
+\centerline{\includegraphics[width=0.75\columnwidth]{confusion_matrix.png}}
+\caption{Confusion matrix of the Random Forest model on the test set.}
+\label{fig:confusion_matrix}
+\end{figure}
+
+The confusion matrix reveals: 1,212 true negatives, 19 false positives, 33 false negatives, and 947 true positives. Out of 980 actual phishing websites in the test set, the Random Forest model correctly identified 947 (96.6\% recall). Only 33 phishing websites were misclassified as legitimate, representing potential security risks.
+
+\subsection{Feature Importance Analysis}
+
+Table~\ref{tab:feature_importance} presents the top 10 most important features identified by permutation feature importance.
+
+\begin{table}[htbp]
+\caption{Top 10 Most Important Features (Random Forest)}
+\label{tab:feature_importance}
+\centering
+\begin{tabular}{clcc}
+\toprule
+\textbf{Rank} & \textbf{Feature} & \textbf{Importance} & \textbf{Std} \\
+\midrule
+1 & sslfinal\_state & 0.1232 & 0.0064 \\
+2 & url\_of\_anchor & 0.1172 & 0.0045 \\
+3 & prefix\_suffix & 0.0396 & 0.0042 \\
+4 & web\_traffic & 0.0311 & 0.0035 \\
+5 & links\_in\_tags & 0.0292 & 0.0029 \\
+6 & having\_sub\_domain & 0.0242 & 0.0026 \\
+7 & age\_of\_domain & 0.0144 & 0.0023 \\
+8 & links\_pointing\_to\_page & 0.0127 & 0.0027 \\
+9 & sfh & 0.0121 & 0.0023 \\
+10 & dnsrecord & 0.0103 & 0.0015 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The two most influential features are \texttt{sslfinal\_state} (SSL certificate status) and \texttt{url\_of\_anchor} (proportion of anchor URLs pointing to different domains), with importance values substantially higher than the remaining features. Fig.~\ref{fig:feature_importance} visualizes the top 10 features.
+
+\begin{figure}[htbp]
+\centerline{\includegraphics[width=\columnwidth]{feature_importance.png}}
+\caption{Top 10 most important features for the Random Forest model based on permutation importance.}
+\label{fig:feature_importance}
+\end{figure}
+
+\subsection{Feature Subset Analysis}
+
+Table~\ref{tab:topk} shows the performance of the Random Forest model when trained with different numbers of top features.
+
+\begin{table}[htbp]
+\caption{Feature Subset Analysis (Random Forest)}
+\label{tab:topk}
+\centering
+\begin{tabular}{lccccc}
+\toprule
+\textbf{Features} & \textbf{Acc.} & \textbf{Prec.} & \textbf{Rec.} & \textbf{F1} & \textbf{AUC} \\
+\midrule
+Top 5 & 0.9263 & 0.9147 & 0.9194 & 0.9170 & 0.9811 \\
+Top 10 & 0.9502 & 0.9430 & 0.9449 & 0.9439 & 0.9900 \\
+Top 15 & 0.9697 & 0.9672 & 0.9643 & 0.9658 & 0.9944 \\
+All 30 & 0.9747 & 0.9773 & 0.9653 & 0.9713 & 0.9965 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Using only the top 15 features achieves an F1-score of 0.9658, which is only 0.0055 lower than using all 30 features (0.9713). This indicates that a reduced feature set can provide nearly equivalent performance while potentially simplifying the detection system.
+
+\section{Discussion}
+
+\subsection{Model Comparison}
+
+The experimental results demonstrate that ensemble-based models, particularly Random Forest, outperform simpler baseline models for phishing website detection. Random Forest achieved the highest F1-score (0.9733) and ROC-AUC (0.9967), indicating both strong classification performance and excellent discrimination ability across all decision thresholds.
+
+Interestingly, Decision Tree performed as the second-best model (F1-score: 0.9650), outperforming both SVM-RBF and Gradient Boosting. This may be because the dataset features are already well-engineered categorical/ordinal variables that align well with tree-based decision boundaries.
+
+Logistic Regression, while achieving the lowest F1-score (0.9224), still provides reasonable performance and serves as a useful interpretable baseline. Its lower performance likely reflects the presence of nonlinear relationships between features that linear models cannot capture.
+
+\subsection{Importance of Metric Selection}
+
+In phishing detection, accuracy alone is insufficient for model evaluation. The Random Forest model achieved a recall of 0.9663, meaning it correctly identified approximately 96.6\% of phishing websites. The 33 false negatives represent cases where phishing websites were incorrectly classified as legitimate---these are the most dangerous errors in a phishing detection system.
+
+The choice of F1-score as the primary selection metric balances the need to detect phishing websites (recall) with the need to avoid incorrectly blocking legitimate websites (precision).
+
+\subsection{Feature Importance Interpretation}
+
+The feature importance analysis reveals that SSL certificate status (\texttt{sslfinal\_state}) and anchor URL patterns (\texttt{url\_of\_anchor}) are the two most influential features for phishing classification. This finding is consistent with known phishing characteristics:
+
+\begin{itemize}
+    \item \textbf{SSL certificate status:} Phishing websites often lack valid SSL certificates or use self-signed certificates, as obtaining legitimate certificates requires domain verification.
+    \item \textbf{URL of anchor:} Phishing websites frequently contain links pointing to external domains or use empty/suspicious anchor references, as the page content is often copied from legitimate sites but hosted on different infrastructure.
+\end{itemize}
+
+Other important features include \texttt{prefix\_suffix} (use of hyphens in domain names), \texttt{web\_traffic} (phishing sites typically have low traffic rankings), and \texttt{having\_sub\_domain} (excessive subdomain usage).
+
+\subsection{Feature Subset Efficiency}
+
+The feature subset analysis demonstrates that the Random Forest model can achieve 99.4\% of its full performance (F1-score 0.9658 vs. 0.9713) using only the top 15 features. This has practical implications for real-time phishing detection systems where feature extraction time and computational resources may be constrained.
+
+\section{Limitations}
+
+This study has several limitations:
+
+\begin{enumerate}
+    \item \textbf{Single dataset:} The experiments were conducted on a single public dataset, which may not fully represent current phishing techniques.
+    \item \textbf{Pre-engineered features:} The dataset contains pre-engineered integer-encoded features rather than raw URLs or webpage content.
+    \item \textbf{Offline evaluation:} The models were evaluated in an offline setting. Real-world systems must handle concept drift.
+    \item \textbf{Default hyperparameters:} Most models were trained with default or minimally tuned hyperparameters.
+    \item \textbf{No deep learning comparison:} This study does not include deep learning approaches, which have shown promise in recent literature.
+    \item \textbf{No real-time deployment:} The models were not tested in a real-time detection scenario.
+\end{enumerate}
+
+Future work could address these limitations by evaluating models on more recent datasets, incorporating deep learning methods, performing hyperparameter optimization, and developing a real-time detection prototype.
+
+\section{Conclusion}
+
+This study presented a comparative evaluation of six supervised machine learning models for phishing website detection using the UCI Phishing Websites Dataset. The results demonstrated that Random Forest achieved the best overall performance with an F1-score of 0.9733 and ROC-AUC of 0.9967, correctly identifying 96.6\% of phishing websites in the test set. The consistency between test set and cross-validation results confirms the robustness of this finding.
+
+Permutation feature importance analysis identified SSL certificate status and anchor URL patterns as the two most influential features for phishing classification, providing interpretable insights into model decision-making. The feature subset analysis further showed that using only the top 15 features achieves performance comparable to the full feature set, suggesting opportunities for computational efficiency in deployment.
+
+The findings confirm that machine learning, particularly ensemble methods, can provide effective and interpretable support for phishing website detection. The reproducible implementation is publicly available at \url{https://github.com/Azmvv/phishing-detection-ml}.
+
+\begin{thebibliography}{13}
+
+\bibitem{khonji2013}
+M. Khonji, Y. Iraqi, and A. Jones, ``Phishing Detection: A Literature Survey,'' \textit{IEEE Communications Surveys \& Tutorials}, vol. 15, no. 4, pp. 2091--2121, 2013.
+
+\bibitem{basit2021}
+A. Basit, M. Zafar, X. Liu, A. R. Javed, Z. Jalil, and K. Kifayat, ``A Comprehensive Survey of AI-Enabled Phishing Attacks Detection Techniques,'' \textit{Telecommunication Systems}, vol. 76, pp. 139--154, 2021.
+
+\bibitem{sahingoz2019}
+O. K. Sahingoz, E. Buber, O. Demir, and B. Diri, ``Machine Learning Based Phishing Detection from URLs,'' \textit{Expert Systems with Applications}, vol. 117, pp. 345--357, 2019.
+
+\bibitem{chiew2021}
+K. L. Chiew, K. S. C. Yong, and C. L. Tan, ``A Survey of Machine Learning-Based Solutions for Phishing Website Detection,'' \textit{Machine Learning and Knowledge Extraction}, vol. 3, no. 3, pp. 672--694, 2021.
+
+\bibitem{subasi2020}
+A. Subasi and E. Kremic, ``Comparison of Adaboost with MultiBoosting for Phishing Website Detection,'' \textit{Procedia Computer Science}, vol. 168, pp. 272--278, 2020.
+
+\bibitem{do2022}
+N. Q. Do, A. Selamat, O. Krejcar, E. Herrera-Viedma, and H. Fujita, ``Deep Learning for Phishing Detection: Taxonomy, Current Challenges and Future Directions,'' \textit{IEEE Access}, vol. 10, pp. 36429--36463, 2022.
+
+\bibitem{alsariera2022}
+Y. A. Alsariera, V. E. Adeyemo, A. O. Balogun, and A. K. Alazzawi, ``AI Meta-Learners and Extra-Trees Algorithm for the Detection of Phishing Websites,'' \textit{IEEE Access}, vol. 10, pp. 42532--42542, 2022.
+
+\bibitem{arrieta2020}
+A. B. Arrieta \textit{et al.}, ``Explainable Artificial Intelligence (XAI): Concepts, Taxonomies, Opportunities and Challenges toward Responsible AI,'' \textit{Information Fusion}, vol. 58, pp. 82--115, 2020.
+
+\bibitem{kohavi1995}
+R. Kohavi, ``A Study of Cross-Validation and Bootstrap for Accuracy Estimation and Model Selection,'' in \textit{Proc. 14th Int. Joint Conf. Artificial Intelligence (IJCAI)}, vol. 2, pp. 1137--1143, 1995.
+
+\bibitem{chatterjee2020}
+S. Chatterjee and A. S. Thakur, ``Phishing Detection Using Machine Learning Techniques,'' arXiv preprint arXiv:2009.11116, 2020.
+
+\bibitem{jain2019}
+A. K. Jain and B. B. Gupta, ``A Machine Learning Based Approach for Phishing Detection Using Hyperlinks Information,'' \textit{Journal of Ambient Intelligence and Humanized Computing}, vol. 10, pp. 2015--2028, 2019.
+
+\bibitem{uci2016}
+UCI Machine Learning Repository, ``Phishing Websites Dataset,'' 2016. [Online]. Available: \url{https://archive.ics.uci.edu/dataset/327/phishing+websites}
+
+\bibitem{sklearn2011}
+F. Pedregosa \textit{et al.}, ``Scikit-learn: Machine Learning in Python,'' \textit{Journal of Machine Learning Research}, vol. 12, pp. 2825--2830, 2011.
+
+\end{thebibliography}
+
+\end{document}
